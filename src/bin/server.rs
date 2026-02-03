@@ -1,4 +1,4 @@
-use tokio::io::{AsyncReadExt};
+use tokio::io::{self,AsyncReadExt};
 use tokio::net::{TcpListener, TcpStream};
 use std::error::Error;
 use tokio::signal;
@@ -8,9 +8,21 @@ async fn handle_client(mut stream: TcpStream) -> Result<(), Box<dyn Error>>
 	loop {
 		stream.readable().await?;
 		let mut buffer: [u8; 128] = [0; 128]; 
-		let read_bytes = stream.try_read(&mut buffer[..]);
+		let mut read_bytes = 0;
 
-		let output: String = String::from_utf8(buffer[..read_bytes.unwrap()].to_vec())?;
+		match stream.try_read(&mut buffer[..]) {
+			Ok(n) => {
+				read_bytes = n;
+			},
+			Err(ref e) if e.kind()  == io::ErrorKind::WouldBlock => {
+				println!("Block More n00b");
+			},
+			Err(e) => {
+				eprintln!("{:?}",e);
+			}
+		}
+
+		let output: String = String::from_utf8(buffer[..read_bytes].to_vec())?;
 
 		println!("Received: {}",output);
 	}
