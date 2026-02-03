@@ -2,15 +2,17 @@ use tokio::io::{AsyncReadExt};
 use tokio::net::{TcpListener, TcpStream};
 use std::error::Error;
 
-async fn handle_client(mut stream: TcpStream) -> Result<(), Box<dyn Error>>{
-    // ..
-	loop {
-		stream.readable().await?;
-		let mut buffer: [u8; 128] = [0; 128]; 
-		let read_bytes = stream.try_read(&mut buffer[..]);
-		println!("Received: {:?}", &buffer[..read_bytes.unwrap()]);
-	}
-	//println!("Got connection");
+async fn handle_client(mut stream: TcpStream) -> Result<(), Box<dyn Error>>
+{
+	stream.readable().await?;
+	let mut buffer: [u8; 128] = [0; 128]; 
+	let read_bytes = stream.try_read(&mut buffer[..]);
+
+	let output: String = String::from_utf8(buffer[..read_bytes.unwrap()].to_vec())?;
+
+	println!("Received: {}",output);
+
+	Ok(())
 }
 
 #[tokio::main]

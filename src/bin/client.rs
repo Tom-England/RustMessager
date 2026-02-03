@@ -1,10 +1,12 @@
-use std::io::prelude::*;
-use std::net::TcpStream;
+use tokio::io::{self, AsyncWriteExt};
+use tokio::net::{TcpStream};
+use std::error::Error;
 
-pub fn main() -> std::io::Result<()> {
-    let mut stream = TcpStream::connect("127.0.0.1:80")?;
+#[tokio::main]
+pub async fn main() -> Result<(), Box<dyn Error>> {
+    let mut stream = TcpStream::connect("127.0.0.1:80").await.unwrap();
 
-    stream.write(&[1; 128])?;
-    stream.read(&mut [0; 128])?;
+    stream.write_all(b"Hello, World!").await?;
+
     Ok(())
 } // the stream is closed here
