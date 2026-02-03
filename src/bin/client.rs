@@ -1,16 +1,13 @@
-use tokio::io::{self, AsyncWriteExt};
+use tokio::io::{self};
 use tokio::net::{TcpStream};
-use std::error::Error;
 use std::sync::{Arc, Mutex};
-
-use std::io::prelude::*;
 
 async fn run_client(input_backlog_mutex: Arc<Mutex<Vec<String>>>) {
     let stream = TcpStream::connect("127.0.0.1:80").await.unwrap();
 	loop {
 		stream.writable().await.unwrap();
 		let mut value = input_backlog_mutex.lock().unwrap();
-		if (value.len() > 0) {
+		if value.len() > 0 {
 			let data: String = value.pop().unwrap();
 			write_value(&stream, data);
 		}
@@ -20,9 +17,7 @@ async fn run_client(input_backlog_mutex: Arc<Mutex<Vec<String>>>) {
 
 fn write_value(stream: &TcpStream, value: String) {
 	match stream.try_write(value.as_bytes()) {
-		Ok(_n) => {
-			;
-		},
+		Ok(_n) => {},
 		Err(ref e) if e.kind()  == io::ErrorKind::WouldBlock => {
 			println!("Block More n00b");
 		},
@@ -35,18 +30,22 @@ fn write_value(stream: &TcpStream, value: String) {
 #[tokio::main]
 pub async fn main() {
 
-	let mut inputBacklog: Vec<String> = Vec::new();
-	let input_backlog_mutex: Arc<Mutex<Vec<String>>>  = Arc::new(Mutex::new(inputBacklog));
+	let input_backlog: Vec<String> = Vec::new();
+	let input_backlog_mutex: Arc<Mutex<Vec<String>>>  = Arc::new(Mutex::new(input_backlog));
 	let input_backlog_mutex_message_thread = input_backlog_mutex.clone();
 	tokio::spawn(async move {run_client(input_backlog_mutex_message_thread).await;});
-	let mut count: u128 = 0;
+
 	loop {
 		println!("Get Some input");
 		let mut test_data = String::new();
 
-    	std::io::stdin().read_line(&mut test_data);
+    	match std::io::stdin().read_line(&mut test_data) {
+			Ok(_n) => {},
+			Err(e) => {
+				eprintln!("{:?}",e);
+			}
+		}
 
 		input_backlog_mutex.lock().unwrap().push(test_data.to_string());
-		count+=1;
 	}
 } // the stream is closed here

@@ -1,9 +1,9 @@
-use tokio::io::{self,AsyncReadExt};
+use tokio::io::{self};
 use tokio::net::{TcpListener, TcpStream};
 use std::error::Error;
 use tokio::signal;
 
-async fn handle_client(mut stream: TcpStream) -> Result<(), Box<dyn Error>>
+async fn handle_client(stream: TcpStream) -> Result<(), Box<dyn Error>>
 {
 	loop {
 		stream.readable().await?;
@@ -26,7 +26,6 @@ async fn handle_client(mut stream: TcpStream) -> Result<(), Box<dyn Error>>
 
 		println!("Received: {}",output);
 	}
-	Ok(())
 }
 
 async fn run_server() {
@@ -36,7 +35,12 @@ async fn run_server() {
         // The second item contains the IP and port of the new connection.
         let (socket, _) = listener.accept().await.unwrap();
         tokio::spawn(async move {
-            handle_client(socket).await;
+            match handle_client(socket).await {
+				Ok(()) => {},
+				Err(e) => {
+					eprintln!("{:?}", e);
+				}
+			}
         });
     }
 }
